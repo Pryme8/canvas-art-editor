@@ -1,0 +1,463 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Canvas Cartographer</title>
+
+
+ <style>
+      html, body {
+         overflow: hidden;
+         width: 100%;
+         height: 100%;
+         margin: 0;
+         padding: 0;
+		 background:black;
+		 font-family:Arial, Helvetica, sans-serif;
+		 font-weight:bold;
+		 color:white;
+		 text-shadow: 1px 1px black, 0px 1px black, 1px 0px black, -1px -1px black, -1px 0px black, 0px -1px black, 1px -1px black, -1px 1px black;
+		 letter-spacing:0.15em;
+		 line-height:1.225em;
+		 box-sizing:border-box;
+		 -moz-box-sizing:border-box;
+		 -webkit-box-sizing:border-box;
+      }
+	body *{
+		  box-sizing:border-box;
+		 -moz-box-sizing:border-box;
+		 -webkit-box-sizing:border-box;	
+	}
+	
+	.main-wrap{
+		position:fixed:
+		width:100%;
+		height:100%;
+		z-index:1;	
+	}
+	
+	.window{
+		display:block;
+		position:absolute;
+		border:1px solid grey;
+		-webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.65);
+		box-shadow: 0 0 5px 0 rgba(0,0,0,0.65);
+		background:#E4E4E4;
+		z-index:200001;
+	}
+	
+	.window.full{
+		width:100%;
+		height:100%;
+		display:none;
+	}
+	
+	.full.active{
+		display:block;	
+	}
+	.window.half{
+		top:0;
+		width:50%;
+		height:100%;
+	}
+	.window.half#editor-block{
+	     left:0;	
+	}
+	.window.half#scene-block{
+	     left:50%;	
+	}
+	
+	.pane, .sub-pane{
+		-webkit-border-radius: 3px;
+		border-radius: 3px;
+		z-index:200001;
+		font-size:0.65em;
+		overflow:hidden;
+		padding:0.2em;
+		padding-bottom:0.4em;
+	}
+	
+	.sub-pane{
+	margin:0.2em;	
+	}
+	
+	.pane .head, .sub-pane .head{
+		position:relative;
+		display:block;
+		height:1.5em;
+		line-height:1.5em;
+		margin-left:-0.2em;margin-right:-0.2em;margin-top:-0.2em;
+		margin-bottom:0.5em;		
+		padding-bottom:0.1em;
+		background:rgba(0,0,0,0.3);
+		color:white;
+		padding-left:1em;
+		vertical-align:middle;
+	}
+	
+	.info-pane{
+			text-shadow:none;
+			color:black;
+			overflow-y:scroll;
+			height:80px;
+			
+	}
+	
+	.info-pane input{
+		font-size:1em;
+	}
+	
+	.list{
+		font-size:0.65em;
+		overflow:hidden;
+		position:relative;
+		padding:0.2em;
+		border-radius: 3px;
+		border:1px solid grey;
+		background:#FFF;
+		display:block;
+		padding-bottom:1.5em;
+	}
+	
+	.list-options{
+		position:absolute;
+		height:1.5em;
+		line-height:1.5em;
+		font-size:1.35em;
+		bottom:0;	
+	}
+	
+	canvas{
+    position : absolute;
+	display : block;
+	width: 100%;
+	height:100%;
+	z-index:101;
+	pointer-events:none;
+	}
+	
+	#view-control{
+		width:220px;
+		height:128px;
+		right:6px;
+		top:6px;
+		white-space:nowrap;
+	}
+	
+	#cam-nav{
+		display:inline-block;
+		position:relative;
+		width:103px;
+		height:112px;
+		white-space:nowrap;
+	}
+	
+	
+	#zone-stack, #layer-stack{
+		width:220px;
+		height:240px;
+		right:6px;
+		top:140px;
+		white-space:nowrap;
+	}
+	#zone-list,  #layer-list{
+		height:120px;	
+	}
+	
+	#layer-stack{
+		top:386px;	
+	}
+	
+	.zone-item{
+		display:block;
+		width:100%;
+		background:rgba(102,153,255,1);
+		height:1.5em;
+		line-height:1.5em;
+		font-size:1.2em;
+		color:black;
+		text-shadow:none;
+		padding-left:0.2em;		
+	}
+	
+	.zone-item.selected{
+		border:1px solid black;
+		padding-left:1em;	
+	}
+	
+	.zone-item a{
+		text-decoration:none;
+		color:black;	
+	}
+	
+	.zone-item a:hover{
+		color:white;	
+	}
+	
+	#tools{
+		width:220px;
+		height:auto;
+		right:6px;
+		top:634px;
+		white-space:normal;
+	}
+	
+	
+	.popup{
+		display:block;
+		position:absolute;
+		width:auto;
+		min-width:300px;
+		height:auto;
+		left:50%;
+		top:50%;
+		transform:translate(-50% , -50%);
+		background:rgba(0,0,0,0.6);
+		z-index:99999999;	
+	}
+	.pop-head{
+		padding:0.2em;
+		padding-left:1em;	
+	}
+	
+	.arg-item{
+		display:block;
+	}
+	
+	.arg-item > span{
+	display:inline-block;
+	width:35%;
+	padding-left:0.5em;
+	}
+	
+	.arg-item input{
+		display:block;
+		width:100%;
+		margin-bottom:0.35em;
+	}
+	
+	.button-text{
+		text-decoration:none;
+		position:relative;
+		display:inline-block;
+		padding:0.1em;
+		color:black;
+		text-shadow:none;
+		border:1px solid darkgrey;
+		background-color:rgba(25,60,90,0.2);
+	}
+	
+	.button-text:hover{
+			border:1px solid white;
+			background-color:rgba(25,60,90,0.45);
+	}
+	
+	.button{
+		text-decoration:none;
+		position:relative;
+		display:inline-block;
+		width:30px;
+		height:30px;
+		border:1px solid darkgrey;
+		background-color:rgba(68,123,153,0.2);
+	}
+	.button:hover{
+			border:1px solid white;
+			background-color:rgba(68,123,153,0.45);
+	}
+	.button::after{
+		display:block;
+		position:absolute;
+		content:'';
+		width:100%;
+		height:100%;
+		background-position:center;
+		background-size:contain;	
+	}
+	
+	#view-options{
+		display:inline-block;
+		vertical-align:top;
+	}
+	
+	#NW::after{
+		background-image:url(icons/appbar.arrow.up.png);
+		  -webkit-transform: rotate(-45deg);
+ 		 -moz-transform: rotate(-45deg);
+ 		 -ms-transform: rotate(-45deg);
+  		-o-transform: rotate(-45deg);
+ 			 transform: rotate(-45deg);
+	}
+	#N::after{
+		background-image:url(icons/appbar.arrow.up.png);
+	}
+	#NE::after{
+		background-image:url(icons/appbar.arrow.up.png);
+		  -webkit-transform: rotate(45deg);
+ 		 -moz-transform: rotate(45deg);
+ 		 -ms-transform: rotate(45deg);
+  		-o-transform: rotate(45deg);
+ 			 transform: rotate(45deg);
+	}
+	#W::after{
+		background-image:url(icons/appbar.arrow.left.png);
+	}
+	#O::after{
+		background-image:url(icons/appbar.arrow.collapsed.png);
+	}
+	#E::after{
+		background-image:url(icons/appbar.arrow.right.png);
+	}
+	#SW::after{
+		background-image:url(icons/appbar.arrow.down.png);
+				  -webkit-transform: rotate(45deg);
+ 		 -moz-transform: rotate(45deg);
+ 		 -ms-transform: rotate(45deg);
+  		-o-transform: rotate(45deg);
+ 			 transform: rotate(45deg);
+	}
+	#S::after{
+		background-image:url(icons/appbar.arrow.down.png);
+	}
+	#SE::after{
+		background-image:url(icons/appbar.arrow.down.png);
+				  -webkit-transform: rotate(-45deg);
+ 		 -moz-transform: rotate(-45deg);
+ 		 -ms-transform: rotate(-45deg);
+  		-o-transform: rotate(-45deg);
+ 			 transform: rotate(-45deg);
+	}
+	
+	#editor-view-button::after{
+		background-image:url(icons/appbar.box.layered.png);
+	}
+	#scene-view-button::after{
+		background-image:url(icons/appbar.image.hdr.png);
+	}
+	#split-view-button::after{
+		background-image:url(icons/appbar.image.export.png);
+	}
+	#select-tool::after{
+		background-image:url(icons/appbar.cursor.default.png);
+	}
+	#move-tool::after{
+		background-image:url(icons/appbar.arrow.expand.png);
+	}
+	#scale-tool::after{
+		background-image:url(icons/appbar.fullscreen.box.png);
+	}
+	#rotate-tool::after{
+		background-image:url(icons/appbar.transform.rotate.counterclockwise.png);
+	}
+	#pen-tool::after{
+		background-image:url(icons/appbar.draw.pencil.png);
+	}
+	#brush-tool::after{
+		background-image:url(icons/appbar.draw.brush.png);
+	}
+	#erase-tool::after{
+		background-image:url(icons/appbar.edit.png);
+						  -webkit-transform: rotate(180deg);
+ 		 -moz-transform: rotate(180deg);
+ 		 -ms-transform: rotate(180deg);
+  		-o-transform: rotate(180deg);
+ 			 transform: rotate(180deg);
+	}
+	#fill-tool::after{
+		background-image:url(icons/appbar.draw.button.png);
+	}
+	#marquee-tool::after{
+		background-image:url(icons/appbar.image.ants.png);
+	}
+	
+</style>
+<script src="./vector2.js"></script>
+<script src="./pie.js"></script>
+<script src="./babylon.custom.js"></script>
+<script src="./cart.0.0.2.js"></script>
+<script src="./cart.elements.js"></script>
+
+
+
+</head>
+<body>
+	<div class='main-wrap'>
+		<div class='main-menu'></div>
+        <div class='window full active' id='editor-block'></div>
+        <div class='window full' id='scene-block'><canvas id='scene-canvas'></canvas></div>
+        
+        <div class='window pane' id='view-control'>
+        <div class='head'>View Control</div> 
+        <div id='cam-nav'>
+        <div id='cam-nav-buttons'>
+        <a href='#' class='button' id='NW' act='move-cam'></a>
+        <a href='#' class='button' id='N' act='move-cam'></a>
+        <a href='#' class='button' id='NE' act='move-cam'></a><br/>
+        <a href='#' class='button' id='W' act='move-cam'></a>
+        <a href='#' class='button' id='O' act='move-cam'></a>
+        <a href='#' class='button' id='E' act='move-cam'></a><br/>
+        <a href='#' class='button' id='SW' act='move-cam'></a>
+        <a href='#' class='button' id='S' act='move-cam'></a>
+        <a href='#' class='button' id='SE' act='move-cam'></a>
+        </div>
+        </div>
+        <div id='view-options'>
+        <a href='#' class='button' id='editor-view-button' t='editor-block' act='change-view'></a>
+        <a href='#' class='button' id='scene-view-button' t='scene-block' act='change-view'></a>
+        <a href='#' class='button' id='split-view-button' t='split-view' act='change-view'></a>
+        </div>
+        </div> 
+        
+        <div class='window pane' id='zone-stack'>
+        <div class='head'>Zones</div>
+        <div class='list' id='zone-list'>
+        <div class='list-options'>
+        <a href='#' class='button-text' id='create-new-zone' act='create-new-zone'>new</a>
+        <a href='#' class='button-text' id='clone-zone' act='clone-zone'>clone</a>&nbsp;&nbsp;
+        <a href='#' class='button-text' id='delete-zone' act='delete-zone'>delete</a>
+        </div>
+        </div>
+        <div class='sub-pane' id='current-zone'><div class='head'>Current</div>
+        <div id='current-zone-info' class='info-pane'></div>
+        
+        </div>
+    	
+        </div>
+        
+        <div class='window pane' id='layer-stack'>
+        <div class='head'>Layers</div>
+        <div class='list' id='layer-list'></div>
+        <div class='sub-pane' id='current-layer'><div class='head'>Current</div>
+        
+        </div>
+    	
+        </div>
+        
+        <div class='window pane' id='tools'>
+        <div class='head'>Tools</div>
+        <div class='sub-pane' id='transform-tools'><div class='head'>Transform</div>
+        	<a href='#' class='button' id='select-tool' act='change-tool'></a>
+            <a href='#' class='button' id='move-tool' act='change-tool'></a>
+            <a href='#' class='button' id='scale-tool' act='change-tool'></a>
+            <a href='#' class='button' id='rotate-tool' act='change-tool'></a>
+        </div>
+         <div class='sub-pane' id='paint-tools'><div class='head'>Paint</div>
+        	<a href='#' class='button' id='pen-tool' act='change-tool'></a>
+            <a href='#' class='button' id='brush-tool' act='change-tool'></a>
+            <a href='#' class='button' id='erase-tool' act='change-tool'></a>
+            <a href='#' class='button' id='fill-tool' act='change-tool'></a>
+            <a href='#' class='button' id='marquee-tool' act='change-tool'></a>
+        </div>
+
+        </div> 
+        
+	</div>
+</div>
+</body>
+<script>
+ document.addEventListener("DOMContentLoaded", function(event) {
+    cart = new CART();
+	console.log(cart);
+  });
+</script>
+</html>
